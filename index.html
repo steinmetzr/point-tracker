@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Task Tracker</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1A1916">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Task Tracker">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F7F5F0;
+    --surface: #FFFFFF;
+    --surface2: #F0EDE6;
+    --border: #D9D5CC;
+    --border-strong: #B8B4AA;
+    --text: #1A1916;
+    --text-muted: #6B6860;
+    --text-faint: #9B9890;
+    --accent: #2D5A27;
+    --accent-light: #EAF3E8;
+    --accent-border: #7DB872;
+    --danger: #8B2020;
+    --danger-light: #FCEAEA;
+    --gold: #8B6914;
+    --gold-light: #FDF6E3;
+    --gold-border: #D4A842;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  header {
+    background: var(--text);
+    color: #F7F5F0;
+    padding: 1.5rem 2.5rem;
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    justify-content: space-between;
+  }
+
+  header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.8rem;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+  }
+
+  .header-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 400;
+    color: #9B9890;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .score-pill {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.85rem;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 100px;
+    padding: 0.4rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+  }
+
+  .score-pill .score-num {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #F7F5F0;
+  }
+
+  .score-pill .score-label {
+    color: #9B9890;
+    font-size: 0.7rem;
+  }
+
+  .main {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 4rem;
+  }
+
+  .toolbar {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .toolbar-left {
+    display: flex;
+    gap: 0.5rem;
+    flex: 1;
+  }
+
+  input[type="text"] {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    padding: 0.55rem 0.9rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  input[type="text"]:focus { border-color: var(--accent-border); }
+
+  input[type="number"] {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.9rem;
+    padding: 0.55rem 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text);
+    outline: none;
+    width: 80px;
+    transition: border-color 0.15s;
+  }
+
+  input[type="number"]:focus { border-color: var(--accent-border); }
+
+  .task-name-input { flex: 1; min-width: 160px; }
+
+  button {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    padding: 0.55rem 1rem;
+    cursor: pointer;
+    transition: all 0.12s;
+    background: var(--surface);
+    color: var(--text);
+  }
+
+  button:hover { background: var(--surface2); }
+  button:active { transform: scale(0.98); }
+
+  .btn-add {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+    padding: 0.55rem 1.25rem;
+  }
+
+  .btn-add:hover { background: #245220; border-color: #245220; }
+
+  .btn-reset-all {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    border-color: var(--border);
+    padding: 0.45rem 0.85rem;
+  }
+
+  .tasks-list { display: flex; flex-direction: column; gap: 0.6rem; }
+
+  .task-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.85rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    animation: slideIn 0.2s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .task-card:hover { border-color: var(--border-strong); }
+
+  .task-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+    margin-left: 0.5rem;
+  }
+
+  .task-card.has-points {
+    border-color: var(--accent-border);
+    background: var(--accent-light);
+  }
+
+  .task-name {
+    flex: 1;
+    font-size: 0.95rem;
+    font-weight: 400;
+    color: var(--text);
+    min-width: 0;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    transition: border-color 0.15s;
+  }
+
+  .task-name:hover { border-color: var(--border); background: var(--surface2); }
+  .task-name:focus { outline: none; border-color: var(--accent-border); background: var(--surface); }
+
+  .task-pts-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 1.05rem;
+    font-weight: 500;
+    min-width: 2.8rem;
+    text-align: right;
+    color: var(--text-muted);
+    transition: color 0.2s;
+  }
+
+  .task-card.has-points .task-pts-value {
+    color: var(--accent);
+  }
+
+  .pts-label {
+    font-size: 0.7rem;
+    color: var(--text-faint);
+    font-family: 'DM Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-left: -4px;
+  }
+
+  .task-card.has-points .pts-label { color: var(--accent-border); }
+
+  .btn-increment {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: 300;
+    padding: 0;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    transition: all 0.12s;
+  }
+
+  .btn-increment:hover {
+    background: var(--accent-light);
+    border-color: var(--accent-border);
+    color: var(--accent);
+  }
+
+  .btn-increment:active { transform: scale(0.92); }
+
+  .btn-decrement {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    font-weight: 300;
+    padding: 0;
+    color: var(--text-faint);
+    flex-shrink: 0;
+    transition: all 0.12s;
+  }
+
+  .btn-decrement:hover { background: var(--danger-light); border-color: #d88; color: var(--danger); }
+  .btn-decrement:active { transform: scale(0.92); }
+
+  .btn-delete {
+    background: transparent;
+    border: 1px solid transparent;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    padding: 0;
+    color: var(--text-faint);
+    flex-shrink: 0;
+    border-radius: var(--radius-sm);
+    transition: all 0.12s;
+  }
+
+  .btn-delete:hover { background: var(--danger-light); border-color: #d88; color: var(--danger); }
+
+  .worth-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-faint);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 2px 8px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 480px) {
+    .worth-badge { display: none; }
+  }
+
+  .task-card.has-points .worth-badge {
+    background: var(--gold-light);
+    border-color: var(--gold-border);
+    color: var(--gold);
+  }
+
+  .section-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-faint);
+    font-size: 0.9rem;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+  }
+
+  .empty-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    opacity: 0.5;
+  }
+
+  .summary-bar {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.85rem 1.25rem;
+    flex: 1;
+    min-width: 110px;
+  }
+
+  .stat-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin-bottom: 0.25rem;
+  }
+
+  .stat-value {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.6rem;
+    color: var(--text);
+    letter-spacing: -0.02em;
+  }
+
+  .offline-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 100px;
+    background: var(--accent-light);
+    color: var(--accent);
+    border: 1px solid var(--accent-border);
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 1.5rem 0;
+  }
+
+  .flash { animation: flashGreen 0.35s ease; }
+  @keyframes flashGreen {
+    0% { background: var(--accent-light); }
+    50% { background: #c8e6c4; }
+    100% { background: var(--accent-light); }
+  }
+
+  .divider { height: 1px; background: var(--border); margin: 2rem 0; }
+
+  .reward-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.85rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    transition: border-color 0.15s;
+    animation: slideIn 0.2s ease;
+  }
+
+  .reward-card:hover { border-color: var(--border-strong); }
+  .reward-card .task-name { flex: 1; }
+  .task-card .task-name { flex: 1; }
+  .reward-card.is-reward { border-color: #B07FD4; background: #F3EBF9; }
+  .reward-card.is-cost  { border-color: #D48080; background: #FCEAEA; }
+
+  .reward-worth {
+    font-family: 'DM Mono', monospace;
+    font-size: 1.05rem;
+    font-weight: 500;
+    min-width: 2.8rem;
+    text-align: right;
+    color: var(--text-muted);
+  }
+
+  .reward-card.is-reward .reward-worth { color: #5A2D82; }
+  .reward-card.is-cost  .reward-worth { color: var(--danger); }
+  .reward-card.is-reward .pts-label { color: #B07FD4; }
+  .reward-card.is-cost  .pts-label { color: #D48080; }
+  .reward-card.is-reward .worth-badge { background: #F3EBF9; border-color: #B07FD4; color: #5A2D82; }
+  .reward-card.is-cost  .worth-badge { background: #FCEAEA; border-color: #D48080; color: var(--danger); }
+
+  .btn-reward {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    height: 34px;
+    padding: 0 0.75rem;
+    display: flex;
+    align-items: center;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    white-space: nowrap;
+    transition: all 0.12s;
+  }
+
+  .btn-reward:hover { background: #F3EBF9; border-color: #B07FD4; color: #5A2D82; }
+  .btn-reward:active { transform: scale(0.92); }
+
+  .stat-card.highlight .stat-value { color: #5A2D82; }
+
+  .flash-reward { animation: flashReward 0.35s ease; }
+  @keyframes flashReward {
+    0% { background: #F3EBF9; } 50% { background: #dfc8f5; } 100% { background: #F3EBF9; }
+  }
+  .flash-cost { animation: flashCost 0.35s ease; }
+  @keyframes flashCost {
+    0% { background: #FCEAEA; } 50% { background: #f5c0c0; } 100% { background: #FCEAEA; }
+  }
+
+  /* Rules */
+  .rule-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.85rem 1rem;
+    transition: border-color 0.15s;
+    animation: slideIn 0.2s ease;
+    border-left: 3px solid #C49A28;
+  }
+
+  .rule-card:hover { border-color: var(--border-strong); }
+
+  .rule-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .rule-card-title {
+    flex: 1;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text);
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    transition: border-color 0.15s;
+    min-width: 0;
+  }
+
+  .rule-card-title:hover { border-color: var(--border); background: var(--surface2); }
+  .rule-card-title:focus { outline: none; border-color: #C49A28; background: var(--surface); }
+
+
+  .btn-delete-line:hover { background: var(--danger-light); border-color: #d88; color: var(--danger); }
+
+  /* Edit mode */
+  .edit-only { display: none !important; }
+  body.edit-mode .edit-only { display: flex !important; }
+
+  /* In non-edit mode, hide delete and decrement buttons */
+  body:not(.edit-mode) .btn-delete,
+  body:not(.edit-mode) .btn-decrement { display: none; }
+
+  .btn-edit-mode {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 100px;
+    background: transparent;
+    color: #9B9890;
+    border: 1px solid rgba(255,255,255,0.2);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-edit-mode:hover { background: rgba(255,255,255,0.1); color: #F7F5F0; }
+  body.edit-mode .btn-edit-mode {
+    background: rgba(255,255,255,0.15);
+    color: #F7F5F0;
+    border-color: rgba(255,255,255,0.4);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Task Tracker</h1>
+    <div class="header-sub">Points &amp; Progress</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:0.75rem;">
+    <span class="offline-badge" id="offline-badge">Offline Ready</span>
+    <button class="btn-edit-mode" id="btn-edit-mode" onclick="toggleEditMode()">Edit Mode</button>
+    <div class="score-pill">
+      <span class="score-label">Total</span>
+      <span class="score-num" id="header-total">0</span>
+      <span class="score-label">pts</span>
+    </div>
+  </div>
+</header>
+
+<div class="main">
+  <div class="summary-bar" id="summary-bar" style="display:none;">
+    <div class="stat-card highlight">
+      <div class="stat-label">Current Total</div>
+      <div class="stat-value" id="stat-current">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Points Earned</div>
+      <div class="stat-value" id="stat-earned">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Tasks Logged</div>
+      <div class="stat-value" id="stat-logged">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Tasks Total</div>
+      <div class="stat-value" id="stat-total">0</div>
+    </div>
+  </div>
+
+  <div class="toolbar edit-only">
+    <div class="toolbar-left">
+      <input type="text" class="task-name-input" id="new-task-name" placeholder="Task name…" maxlength="80" />
+      <input type="number" id="new-task-pts" placeholder="Pts" min="1" max="9999" value="10" />
+    </div>
+    <button class="btn-add" onclick="addTask()">+ Add Task</button>
+  </div>
+  <div class="toolbar" style="margin-bottom:0.5rem;">
+    <button class="btn-reset-all" onclick="resetAll()">Reset Points</button>
+  </div>
+
+  <div class="section-title">
+    <span>Tasks</span>
+    <span id="task-count"></span>
+  </div>
+  <div class="tasks-list" id="tasks-list">
+    <div class="empty-state">
+      <div class="empty-icon">◻</div>
+      Add your first task above
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="toolbar edit-only">
+    <div class="toolbar-left">
+      <input type="text" class="task-name-input" id="new-reward-name" placeholder="Reward name…" maxlength="80" />
+      <input type="number" id="new-reward-pts" placeholder="Pts" value="-10" />
+    </div>
+    <button class="btn-add" onclick="addReward()" style="background:#5A2D82;border-color:#5A2D82;">+ Add Reward</button>
+  </div>
+
+  <div class="section-title">
+    <span>Rewards</span>
+    <span id="reward-count"></span>
+  </div>
+  <div class="tasks-list" id="rewards-list">
+    <div class="empty-state">
+      <div class="empty-icon">◻</div>
+      Add your first reward above
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="toolbar edit-only">
+    <div class="toolbar-left">
+      <input type="text" class="task-name-input" id="new-rule-title" placeholder="Rule card title…" maxlength="80" />
+    </div>
+    <button class="btn-add" onclick="addRule()" style="background:#6B4C11;border-color:#6B4C11;">+ Add Rule Card</button>
+  </div>
+
+  <div class="section-title">
+    <span>Rules</span>
+    <span id="rule-count"></span>
+  </div>
+  <div class="tasks-list" id="rules-list">
+    <div class="empty-state">
+      <div class="empty-icon">◻</div>
+      Add your first rule card above
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'task_tracker_v1';
+const REWARDS_KEY = 'task_tracker_rewards_v1';
+const CURRENT_KEY = 'task_tracker_current_v1';
+const RULES_KEY   = 'task_tracker_rules_v1';
+
+let tasks = [], rewards = [], rules = [], currentTotal = 0;
+
+function load() {
+  try { const r = localStorage.getItem(STORAGE_KEY);  if (r) tasks   = JSON.parse(r); } catch(e) { tasks = []; }
+  try { const r = localStorage.getItem(REWARDS_KEY);  if (r) rewards = JSON.parse(r); } catch(e) { rewards = []; }
+  try { const r = localStorage.getItem(RULES_KEY);    if (r) rules   = JSON.parse(r); } catch(e) { rules = []; }
+  try { const r = localStorage.getItem(CURRENT_KEY);  if (r !== null) currentTotal = parseInt(r) || 0; } catch(e) { currentTotal = 0; }
+  render();
+}
+
+function save() {
+  try {
+    localStorage.setItem(STORAGE_KEY,  JSON.stringify(tasks));
+    localStorage.setItem(REWARDS_KEY,  JSON.stringify(rewards));
+    localStorage.setItem(RULES_KEY,    JSON.stringify(rules));
+    localStorage.setItem(CURRENT_KEY,  String(currentTotal));
+  } catch(e) {}
+}
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function esc(str) { return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ── Edit Mode ──────────────────────────────────────────────────────
+
+let editMode = false;
+
+function applyEditMode() {
+  document.body.classList.toggle('edit-mode', editMode);
+  document.getElementById('btn-edit-mode').textContent = editMode ? 'Done Editing' : 'Edit Mode';
+  var editable = document.querySelectorAll('.task-name, .rule-card-title, .worth-badge span[onblur]');
+  editable.forEach(function(el) {
+    el.contentEditable = editMode ? 'true' : 'false';
+  });
+}
+
+function toggleEditMode() {
+  editMode = !editMode;
+  applyEditMode();
+}
+
+// ── Tasks ──────────────────────────────────────────────────────────
+
+function addTask() {
+  const nameEl = document.getElementById('new-task-name');
+  const ptsEl  = document.getElementById('new-task-pts');
+  const name = nameEl.value.trim(), pts = parseInt(ptsEl.value) || 10;
+  if (!name) { nameEl.focus(); return; }
+  tasks.push({ id: uid(), name, worth: pts, earned: 0 });
+  nameEl.value = ''; ptsEl.value = '10'; nameEl.focus();
+  save(); render();
+}
+
+function increment(id) {
+  const t = tasks.find(t => t.id === id); if (!t) return;
+  t.earned += t.worth; currentTotal += t.worth;
+  save(); render(); flashCard(id, 'flash');
+}
+
+function decrement(id) {
+  const t = tasks.find(t => t.id === id); if (!t) return;
+  const delta = Math.min(t.worth, t.earned);
+  t.earned = Math.max(0, t.earned - t.worth); currentTotal -= delta;
+  save(); render();
+}
+
+// ── Rewards ────────────────────────────────────────────────────────
+
+function addReward() {
+  const nameEl = document.getElementById('new-reward-name');
+  const ptsEl  = document.getElementById('new-reward-pts');
+  const name = nameEl.value.trim(), pts = parseInt(ptsEl.value);
+  if (!name || isNaN(pts) || pts === 0) { nameEl.focus(); return; }
+  rewards.push({ id: uid(), name, worth: pts });
+  nameEl.value = ''; ptsEl.value = '-10'; nameEl.focus();
+  save(); render();
+}
+
+function applyReward(id) {
+  const r = rewards.find(r => r.id === id); if (!r) return;
+  currentTotal += r.worth;
+  save(); render(); flashCard(id, r.worth >= 0 ? 'flash-reward' : 'flash-cost');
+}
+
+// ── Rules ──────────────────────────────────────────────────────────
+
+function addRule() {
+  const titleEl = document.getElementById('new-rule-title');
+  const title = titleEl.value.trim();
+  if (!title) { titleEl.focus(); return; }
+  rules.push({ id: uid(), title });
+  titleEl.value = ''; titleEl.focus();
+  save(); render();
+}
+
+// ── Shared helpers ─────────────────────────────────────────────────
+
+function deleteItem(list, id) { const i = list.findIndex(x => x.id === id); if (i !== -1) list.splice(i,1); save(); render(); }
+function deleteTask(id)   { deleteItem(tasks,   id); }
+function deleteReward(id) { deleteItem(rewards, id); }
+function deleteRule(id)   { deleteItem(rules,   id); }
+
+function renameItem(list, id, val) { const x = list.find(x => x.id === id); if (x && val.trim()) x.name = val.trim(); save(); }
+function renameTask(id, val)   { renameItem(tasks,   id, val); }
+function renameReward(id, val) { renameItem(rewards, id, val); }
+function renameRule(id, val)   { const r = rules.find(r => r.id === id); if (r && val.trim()) r.title = val.trim(); save(); }
+
+function changeWorth(id, val, list) { const x = list.find(x => x.id === id); const n = parseInt(val); if (x && !isNaN(n) && n !== 0) x.worth = n; save(); render(); }
+function changeTaskWorth(id, val)   { changeWorth(id, val, tasks); }
+function changeRewardWorth(id, val) { changeWorth(id, val, rewards); }
+
+function flashCard(id, cls) {
+  const card = document.querySelector('[data-id="' + id + '"]');
+  if (!card) return;
+  card.classList.remove('flash','flash-reward','flash-cost');
+  void card.offsetWidth; card.classList.add(cls);
+}
+
+// ── Reset ──────────────────────────────────────────────────────────
+
+let resetPending = false, resetTimer = null;
+
+function resetAll() {
+  if (!tasks.some(t => t.earned > 0) && currentTotal === 0) return;
+  if (!resetPending) {
+    resetPending = true;
+    const btn = document.querySelector('.btn-reset-all');
+    btn.textContent = 'Confirm reset?'; btn.style.color = 'var(--danger)'; btn.style.borderColor = '#d88';
+    resetTimer = setTimeout(() => {
+      resetPending = false; btn.textContent = 'Reset Points'; btn.style.color = ''; btn.style.borderColor = '';
+    }, 2500);
+    return;
+  }
+  clearTimeout(resetTimer); resetPending = false;
+  const btn = document.querySelector('.btn-reset-all');
+  btn.textContent = 'Reset Points'; btn.style.color = ''; btn.style.borderColor = '';
+  tasks.forEach(t => t.earned = 0); currentTotal = 0;
+  save(); render();
+}
+
+// ── Render ─────────────────────────────────────────────────────────
+
+function render() {
+  const totalEarned = tasks.reduce((s,t) => s + t.earned, 0);
+  const logged = tasks.filter(t => t.earned > 0).length;
+
+  document.getElementById('header-total').textContent  = currentTotal;
+  document.getElementById('task-count').textContent    = tasks.length   ? tasks.length   + ' task'   + (tasks.length   !== 1 ? 's' : '') : '';
+  document.getElementById('reward-count').textContent  = rewards.length ? rewards.length + ' reward' + (rewards.length !== 1 ? 's' : '') : '';
+  document.getElementById('rule-count').textContent    = rules.length   ? rules.length   + ' card'   + (rules.length   !== 1 ? 's' : '') : '';
+
+  const bar = document.getElementById('summary-bar');
+  if (tasks.length || rewards.length || rules.length) {
+    bar.style.display = 'flex';
+    document.getElementById('stat-current').textContent = currentTotal;
+    document.getElementById('stat-earned').textContent  = totalEarned;
+    document.getElementById('stat-logged').textContent  = logged;
+    document.getElementById('stat-total').textContent   = tasks.length;
+  } else { bar.style.display = 'none'; }
+
+  // Tasks
+  const tl = document.getElementById('tasks-list');
+  if (!tasks.length) {
+    tl.innerHTML = '<div class="empty-state"><div class="empty-icon">\u25fb</div>Add your first task above</div>';
+  } else {
+    tl.innerHTML = tasks.map(function(t) {
+      return '<div class="task-card' + (t.earned > 0 ? ' has-points' : '') + '" data-id="' + t.id + '">'
+        + '<span contenteditable="true" spellcheck="false" class="task-name"'
+        + ' onblur="renameTask(\'' + t.id + '\', this.textContent)"'
+        + ' onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur();}"'
+        + '>' + esc(t.name) + '</span>'
+        + '<span class="worth-badge" title="Edit to change point value">'
+        + '<span contenteditable="true" spellcheck="false" style="outline:none;cursor:text;"'
+        + ' onblur="changeTaskWorth(\'' + t.id + '\', this.textContent)"'
+        + ' onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur();}"'
+        + '>' + t.worth + '</span> pts ea.</span>'
+        + '<div class="task-controls">'
+        + '<button class="btn-decrement" onclick="decrement(\'' + t.id + '\')" title="Remove one increment">\u2212</button>'
+        + '<span class="task-pts-value">' + t.earned + '</span>'
+        + '<span class="pts-label">pts</span>'
+        + '<button class="btn-increment" onclick="increment(\'' + t.id + '\')" title="Add ' + t.worth + ' points">+</button>'
+        + '<button class="btn-delete" onclick="deleteTask(\'' + t.id + '\')" title="Remove task">\u2715</button>'
+        + '</div></div>';
+    }).join('');
+  }
+
+  // Rewards
+  const rl = document.getElementById('rewards-list');
+  if (!rewards.length) {
+    rl.innerHTML = '<div class="empty-state"><div class="empty-icon">\u25fb</div>Add your first reward above</div>';
+  } else {
+    rl.innerHTML = rewards.map(function(r) {
+      var isCost = r.worth < 0;
+      var cls = isCost ? 'is-cost' : 'is-reward';
+      var btnLabel = isCost ? 'Spend ' + r.worth + ' pts' : 'Claim +' + r.worth + ' pts';
+      return '<div class="reward-card ' + cls + '" data-id="' + r.id + '">'
+        + '<span contenteditable="true" spellcheck="false" class="task-name"'
+        + ' onblur="renameReward(\'' + r.id + '\', this.textContent)"'
+        + ' onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur();}"'
+        + '>' + esc(r.name) + '</span>'
+        + '<span class="worth-badge" title="Edit to change point value">'
+        + '<span contenteditable="true" spellcheck="false" style="outline:none;cursor:text;"'
+        + ' onblur="changeRewardWorth(\'' + r.id + '\', this.textContent)"'
+        + ' onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur();}"'
+        + '>' + r.worth + '</span> pts</span>'
+        + '<button class="btn-reward" onclick="applyReward(\'' + r.id + '\')" title="' + btnLabel + '">' + btnLabel + '</button>'
+        + '<button class="btn-delete" onclick="deleteReward(\'' + r.id + '\')" title="Remove reward">\u2715</button>'
+        + '</div>';
+    }).join('');
+  }
+
+  // Rules
+  var rll = document.getElementById('rules-list');
+  if (!rules.length) {
+    rll.innerHTML = '<div class="empty-state"><div class="empty-icon">\u25fb</div>Add your first rule card above</div>';
+  } else {
+    rll.innerHTML = rules.map(function(rule) {
+      return '<div class="rule-card" data-id="' + rule.id + '">'
+        + '<div class="rule-card-header">'
+        + '<span contenteditable="true" spellcheck="false" class="rule-card-title"'
+        + ' onblur="renameRule(\'' + rule.id + '\', this.textContent)"'
+        + ' onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur();}"'
+        + '>' + esc(rule.title) + '</span>'
+        + '<button class="btn-delete" onclick="deleteRule(\'' + rule.id + '\')" title="Remove card">\u2715</button>'
+        + '</div></div>';
+    }).join('');
+  }
+  applyEditMode();
+}
+
+document.getElementById('new-task-name').addEventListener('keydown',   function(e) { if (e.key==='Enter') addTask(); });
+document.getElementById('new-task-pts').addEventListener('keydown',    function(e) { if (e.key==='Enter') addTask(); });
+document.getElementById('new-reward-name').addEventListener('keydown', function(e) { if (e.key==='Enter') addReward(); });
+document.getElementById('new-reward-pts').addEventListener('keydown',  function(e) { if (e.key==='Enter') addReward(); });
+document.getElementById('new-rule-title').addEventListener('keydown',  function(e) { if (e.key==='Enter') addRule(); });
+
+window.addEventListener('online',  function() { document.getElementById('offline-badge').textContent = 'Online'; });
+window.addEventListener('offline', function() { document.getElementById('offline-badge').textContent = 'Offline Ready'; });
+
+// Register service worker for PWA
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('./sw.js').then(function(reg) {
+      console.log('SW registered:', reg.scope);
+    }).catch(function(err) {
+      console.log('SW registration failed:', err);
+    });
+  });
+}
+
+load();
+
+if (!tasks.length && !rewards.length && !rules.length) {
+  tasks = [
+    { id: uid(), name: 'Brush teeth', worth: 10, earned: 0 },
+    { id: uid(), name: 'Drink water', worth: 5, earned: 0 },
+    { id: uid(), name: 'Exercise', worth: 10, earned: 0 },
+  ];
+  rewards = [
+    { id: uid(), name: '30 min screen time', worth: -15 },
+    { id: uid(), name: 'Dessert',            worth: -20 },
+    { id: uid(), name: 'Bonus day off',      worth:  50 },
+  ];
+  rules = [
+    { id: uid(), title: 'General Rules' },
+    { id: uid(), title: 'Bonus Conditions' },
+  ];
+  save(); render();
+}
+</script>
+</body>
+</html>
