@@ -597,6 +597,8 @@
   </div>
   <div style="display:flex;align-items:center;gap:0.75rem;">
     <span class="offline-badge" id="offline-badge">Offline Ready</span>
+    <button class="btn-reset-all" onclick="exportData()">Export</button>
+    <button class="btn-reset-all" onclick="importData()">Import</button>
     <button class="btn-edit-mode" id="btn-edit-mode" onclick="toggleEditMode()">Edit Mode</button>
     <div class="score-pill">
       <span class="score-label">Total</span>
@@ -952,6 +954,93 @@ document.getElementById('new-rule-consequence').addEventListener('keydown', func
 
 window.addEventListener('online',  function() { document.getElementById('offline-badge').textContent = 'Online'; });
 window.addEventListener('offline', function() { document.getElementById('offline-badge').textContent = 'Offline Ready'; });
+
+// ── Import / Export ─────────────────────────────────────────────────
+async function exportData() {
+  // Export without IDs — imported items will get fresh UIDs
+  const payload = {
+    tasks: tasks.map(t => ({ name: t.name, worth: t.worth, earned: t.earned })),
+    rewards: rewards.map(r => ({ name: r.name, worth: r.worth })),
+    rules: rules.map(r => ({ rule: r.rule, consequence: r.consequence })),
+    currentTotal: currentTotal,
+    exportedAt: new Date().toISOString()
+  };
+  const json = JSON.stringify(payload, null, 2);
+  // Prefer File System Access API when available
+  if (window.showSaveFilePicker) {
+    try {
+      const opts = [{ description: 'JSON', accept: { 'application/json': ['.json'] } }];
+      const handle = await window.showSaveFilePicker({ types: opts });
+      const writable = await handle.createWritable();
+      await writable.write(json);
+      await writable.close();
+      alert('Export saved.');
+      return;
+    } catch (e) {
+      console.log('Save failed or cancelled', e);
+    }
+  }
+  // Fallback: prompt for filename and trigger download
+  const fname = prompt('Filename to save as', 'task-tracker.json') || 'task-tracker.json';
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = fname; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  alert('Export downloaded to your browser downloads folder.');
+}
+
+async function importData() {
+  // Prefer File System Access API
+  let text = null;
+  if (window.showOpenFilePicker) {
+    try {
+      const [fileHandle] = await window.showOpenFilePicker({ types: [{ description: 'JSON', accept: { 'application/json': ['.json'] } }], multiple: false });
+      const file = await fileHandle.getFile();
+      text = await file.text();
+    } catch (e) { console.log('Open cancelled or failed', e); }
+  }
+  if (text === null) {
+    // Fallback to input[type=file]
+    const input = document.createElement('input'); input.type = 'file'; input.accept = '.json,application/json';
+    return new Promise((resolve) => {
+      input.addEventListener('change', function() {
+        const f = input.files && input.files[0]; if (!f) { resolve(); return; }
+        const reader = new FileReader();
+        reader.onload = function(e) { text = e.target.result; try { processImported(text); } catch(err){ alert('Import failed: ' + err); } resolve(); };
+        reader.readAsText(f);
+      });
+      input.click();
+    });
+  }
+  try { await processImported(text); } catch (err) { alert('Import failed: ' + err); }
+}
+
+async function processImported(text) {
+  if (!text) { alert('No file selected'); return; }
+  let data;
+  try { data = JSON.parse(text); } catch (e) { alert('Invalid JSON'); return; }
+  let added = { tasks: 0, rewards: 0, rules: 0 };
+  if (Array.isArray(data.tasks)) {
+    data.tasks.forEach(t => {
+      const exists = tasks.some(x => x.name === t.name && Number(x.worth) === Number(t.worth));
+      if (!exists) { tasks.push({ id: uid(), name: t.name || 'Untitled', worth: Number(t.worth) || 0, earned: Number(t.earned) || 0 }); added.tasks++; }
+    });
+  }
+  if (Array.isArray(data.rewards)) {
+    data.rewards.forEach(r => {
+      const exists = rewards.some(x => x.name === r.name && Number(x.worth) === Number(r.worth));
+      if (!exists) { rewards.push({ id: uid(), name: r.name || 'Untitled', worth: Number(r.worth) || 0 }); added.rewards++; }
+    });
+  }
+  if (Array.isArray(data.rules)) {
+    data.rules.forEach(rr => {
+      const exists = rules.some(x => (x.rule === rr.rule) && (x.consequence === rr.consequence));
+      if (!exists) { rules.push({ id: uid(), rule: rr.rule || '', consequence: rr.consequence || '' }); added.rules++; }
+    });
+  }
+  save(); render();
+  alert('Import complete. Added: ' + added.tasks + ' tasks, ' + added.rewards + ' rewards, ' + added.rules + ' rules.');
+}
 
 // Register service worker for PWA
 if ('serviceWorker' in navigator) {
