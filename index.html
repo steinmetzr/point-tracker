@@ -493,7 +493,9 @@
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 0.85rem 1rem;
+    display: flex;
+    align-items: stretch;
+    overflow: hidden;
     transition: border-color 0.15s;
     animation: slideIn 0.2s ease;
     border-left: 3px solid #C49A28;
@@ -501,28 +503,57 @@
 
   .rule-card:hover { border-color: var(--border-strong); }
 
-  .rule-card-header {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    margin-bottom: 0.6rem;
+  .rule-col {
+    flex: 1;
+    padding: 0.75rem 0.85rem;
+    font-size: 0.9rem;
+    min-width: 0;
   }
 
-  .rule-card-title {
-    flex: 1;
-    font-size: 0.95rem;
-    font-weight: 500;
+  .rule-col-rule {
+    border-right: 1px solid var(--border);
     color: var(--text);
+    font-weight: 500;
+  }
+
+  .rule-col-consequence {
+    color: var(--danger);
+    background: #fff8f8;
+  }
+
+  .rule-col-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin-bottom: 0.3rem;
+  }
+
+  .rule-col-consequence .rule-col-label { color: #D48080; }
+
+  .rule-col-text {
     cursor: pointer;
     padding: 2px 4px;
     border-radius: 4px;
     border: 1px solid transparent;
     transition: border-color 0.15s;
     min-width: 0;
+    display: block;
+    word-break: break-word;
   }
 
-  .rule-card-title:hover { border-color: var(--border); background: var(--surface2); }
-  .rule-card-title:focus { outline: none; border-color: #C49A28; background: var(--surface); }
+  .rule-col-text:hover { border-color: var(--border); background: var(--surface2); }
+  .rule-col-text:focus { outline: none; border-color: #C49A28; background: var(--surface); }
+  .rule-col-consequence .rule-col-text:focus { border-color: #D48080; }
+
+  .rule-delete-col {
+    display: flex;
+    align-items: center;
+    padding: 0 0.5rem;
+    border-left: 1px solid var(--border);
+    background: var(--surface2);
+  }
 
 
   .btn-delete-line:hover { background: var(--danger-light); border-color: #d88; color: var(--danger); }
@@ -534,6 +565,7 @@
   /* In non-edit mode, hide delete and decrement buttons */
   body:not(.edit-mode) .btn-delete,
   body:not(.edit-mode) .btn-decrement { display: none; }
+  body:not(.edit-mode) .rule-delete-col { display: none; }
 
   .btn-edit-mode {
     font-family: 'DM Mono', monospace;
@@ -639,21 +671,22 @@
 
   <div class="divider"></div>
 
-  <div class="toolbar edit-only">
-    <div class="toolbar-left">
-      <input type="text" class="task-name-input" id="new-rule-title" placeholder="Rule card title…" maxlength="80" />
+  <div class="toolbar edit-only" style="flex-wrap:wrap;">
+    <div class="toolbar-left" style="flex-wrap:wrap;">
+      <input type="text" class="task-name-input" id="new-rule-text" placeholder="Rule…" maxlength="120" />
+      <input type="text" class="task-name-input" id="new-rule-consequence" placeholder="Consequence…" maxlength="120" />
     </div>
-    <button class="btn-add" onclick="addRule()" style="background:#6B4C11;border-color:#6B4C11;">+ Add Rule Card</button>
+    <button class="btn-add" onclick="addRule()" style="background:#6B4C11;border-color:#6B4C11;">+ Add Rule</button>
   </div>
 
   <div class="section-title">
-    <span>Rules</span>
+    <span>Rules / Consequences</span>
     <span id="rule-count"></span>
   </div>
   <div class="tasks-list" id="rules-list">
     <div class="empty-state">
       <div class="empty-icon">◻</div>
-      Add your first rule card above
+      Add your first rule above
     </div>
   </div>
 </div>
@@ -693,9 +726,9 @@ let editMode = false;
 function applyEditMode() {
   document.body.classList.toggle('edit-mode', editMode);
   document.getElementById('btn-edit-mode').textContent = editMode ? 'Done Editing' : 'Edit Mode';
-  var editable = document.querySelectorAll('.task-name, .rule-card-title, .worth-badge span[onblur]');
+  var editable = document.querySelectorAll('.task-name, .rule-col-text, .worth-badge span[onblur]');
   editable.forEach(function(el) {
-    el.contentEditable = editMode ? 'true' : 'false';
+    el.contentEditable = editMode;
   });
 }
 
@@ -750,11 +783,13 @@ function applyReward(id) {
 // ── Rules ──────────────────────────────────────────────────────────
 
 function addRule() {
-  const titleEl = document.getElementById('new-rule-title');
-  const title = titleEl.value.trim();
-  if (!title) { titleEl.focus(); return; }
-  rules.push({ id: uid(), title });
-  titleEl.value = ''; titleEl.focus();
+  const ruleEl = document.getElementById('new-rule-text');
+  const consEl = document.getElementById('new-rule-consequence');
+  const rule = ruleEl.value.trim();
+  const consequence = consEl.value.trim();
+  if (!rule) { ruleEl.focus(); return; }
+  rules.push({ id: uid(), rule, consequence });
+  ruleEl.value = ''; consEl.value = ''; ruleEl.focus();
   save(); render();
 }
 
@@ -768,7 +803,11 @@ function deleteRule(id)   { deleteItem(rules,   id); }
 function renameItem(list, id, val) { const x = list.find(x => x.id === id); if (x && val.trim()) x.name = val.trim(); save(); }
 function renameTask(id, val)   { renameItem(tasks,   id, val); }
 function renameReward(id, val) { renameItem(rewards, id, val); }
-function renameRule(id, val)   { const r = rules.find(r => r.id === id); if (r && val.trim()) r.title = val.trim(); save(); }
+function updateRuleField(id, field, val) {
+  const r = rules.find(r => r.id === id);
+  if (r && val.trim()) r[field] = val.trim();
+  save();
+}
 
 function changeWorth(id, val, list) { const x = list.find(x => x.id === id); const n = parseInt(val); if (x && !isNaN(n) && n !== 0) x.worth = n; save(); render(); }
 function changeTaskWorth(id, val)   { changeWorth(id, val, tasks); }
@@ -877,17 +916,28 @@ function render() {
   // Rules
   var rll = document.getElementById('rules-list');
   if (!rules.length) {
-    rll.innerHTML = '<div class="empty-state"><div class="empty-icon">\u25fb</div>Add your first rule card above</div>';
+    rll.innerHTML = '<div class="empty-state"><div class="empty-icon">\u25fb</div>Add your first rule above</div>';
   } else {
     rll.innerHTML = rules.map(function(rule) {
       return '<div class="rule-card" data-id="' + rule.id + '">'
-        + '<div class="rule-card-header">'
-        + '<span contenteditable="true" spellcheck="false" class="rule-card-title"'
-        + ' onblur="renameRule(\'' + rule.id + '\', this.textContent)"'
+        + '<div class="rule-col rule-col-rule">'
+        + '<div class="rule-col-label">Rule</div>'
+        + '<span contenteditable="true" spellcheck="false" class="rule-col-text"'
+        + ' onblur="updateRuleField(\'' + rule.id + '\', \'rule\', this.textContent)"'
         + ' onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur();}"'
-        + '>' + esc(rule.title) + '</span>'
-        + '<button class="btn-delete" onclick="deleteRule(\'' + rule.id + '\')" title="Remove card">\u2715</button>'
-        + '</div></div>';
+        + '>' + esc(rule.rule || '') + '</span>'
+        + '</div>'
+        + '<div class="rule-col rule-col-consequence">'
+        + '<div class="rule-col-label">Consequence</div>'
+        + '<span contenteditable="true" spellcheck="false" class="rule-col-text"'
+        + ' onblur="updateRuleField(\'' + rule.id + '\', \'consequence\', this.textContent)"'
+        + ' onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur();}"'
+        + '>' + esc(rule.consequence || '') + '</span>'
+        + '</div>'
+        + '<div class="rule-delete-col">'
+        + '<button class="btn-delete" onclick="deleteRule(\'' + rule.id + '\')" title="Remove rule">\u2715</button>'
+        + '</div>'
+        + '</div>';
     }).join('');
   }
   applyEditMode();
@@ -897,7 +947,8 @@ document.getElementById('new-task-name').addEventListener('keydown',   function(
 document.getElementById('new-task-pts').addEventListener('keydown',    function(e) { if (e.key==='Enter') addTask(); });
 document.getElementById('new-reward-name').addEventListener('keydown', function(e) { if (e.key==='Enter') addReward(); });
 document.getElementById('new-reward-pts').addEventListener('keydown',  function(e) { if (e.key==='Enter') addReward(); });
-document.getElementById('new-rule-title').addEventListener('keydown',  function(e) { if (e.key==='Enter') addRule(); });
+document.getElementById('new-rule-text').addEventListener('keydown',        function(e) { if (e.key==='Enter') addRule(); });
+document.getElementById('new-rule-consequence').addEventListener('keydown', function(e) { if (e.key==='Enter') addRule(); });
 
 window.addEventListener('online',  function() { document.getElementById('offline-badge').textContent = 'Online'; });
 window.addEventListener('offline', function() { document.getElementById('offline-badge').textContent = 'Offline Ready'; });
@@ -917,21 +968,41 @@ load();
 
 if (!tasks.length && !rewards.length && !rules.length) {
   tasks = [
-    { id: uid(), name: 'Brush teeth', worth: 10, earned: 0 },
-    { id: uid(), name: 'Drink water', worth: 5, earned: 0 },
-    { id: uid(), name: 'Exercise', worth: 10, earned: 0 },
+    { id: uid(), name: 'Make bed',                         worth: 5,  earned: 0 },
+    { id: uid(), name: 'Brush teeth (morning & night)',    worth: 5,  earned: 0 },
+    { id: uid(), name: 'Get dressed on own',               worth: 5,  earned: 0 },
+    { id: uid(), name: 'Eat breakfast/lunch/dinner',       worth: 5,  earned: 0 },
+    { id: uid(), name: 'Put dirty clothes in hamper',      worth: 3,  earned: 0 },
+    { id: uid(), name: 'Clean up toys after playing',      worth: 5,  earned: 0 },
+    { id: uid(), name: 'Do homework without being asked',  worth: 10, earned: 0 },
+    { id: uid(), name: 'Read for 15 minutes',              worth: 10, earned: 0 },
+    { id: uid(), name: 'Use kind words all day',           worth: 8,  earned: 0 },
+    { id: uid(), name: 'Help set or clear the table',      worth: 5,  earned: 0 },
+    { id: uid(), name: 'Take bath or shower',              worth: 5,  earned: 0 },
+    { id: uid(), name: 'Go to bed on time without fuss',   worth: 8,  earned: 0 },
+    { id: uid(), name: 'Share with siblings',              worth: 5,  earned: 0 },
+    { id: uid(), name: 'Feed pet',                         worth: 5,  earned: 0 },
   ];
   rewards = [
-    { id: uid(), name: '30 min screen time', worth: -15 },
-    { id: uid(), name: 'Dessert',            worth: -20 },
-    { id: uid(), name: 'Bonus day off',      worth:  50 },
+    { id: uid(), name: '30 min extra screen time', worth: -15 },
+    { id: uid(), name: 'Choose dinner',            worth: -20 },
+    { id: uid(), name: 'Stay up 30 min late',      worth: -20 },
+    { id: uid(), name: 'Pick a movie night',       worth: -25 },
+    { id: uid(), name: 'Small treat/candy',        worth: -10 },
+    { id: uid(), name: 'Trip to the park',         worth: -30 },
+    { id: uid(), name: 'Bonus points (good day!)', worth:  15 },
   ];
   rules = [
-    { id: uid(), title: 'General Rules' },
-    { id: uid(), title: 'Bonus Conditions' },
+    { id: uid(), rule: 'Be kind and use nice words',         consequence: 'Lose 5 points' },
+    { id: uid(), rule: 'No hitting, kicking, or hurting',    consequence: 'Lose 10 points and time-out' },
+    { id: uid(), rule: 'Clean up after yourself',            consequence: 'Lose 5 points' },
+    { id: uid(), rule: 'Do homework before screen time',     consequence: 'No screen time that day' },
+    { id: uid(), rule: 'Bedtime is on time, no arguing',     consequence: 'Lose 8 points' },
+    { id: uid(), rule: 'Respect others and their belongings',consequence: 'Lose 5 points' },
   ];
   save(); render();
 }
 </script>
 </body>
 </html>
+ 
