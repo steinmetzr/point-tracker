@@ -597,8 +597,8 @@
   </div>
   <div style="display:flex;align-items:center;gap:0.75rem;">
     <span class="offline-badge" id="offline-badge">Offline Ready</span>
-    <button class="btn-reset-all" onclick="exportData()">Export</button>
-    <button class="btn-reset-all" onclick="importData()">Import</button>
+    <button class="btn-export" onclick="exportData()">Export</button>
+    <button class="btn-import" onclick="importData()">Import</button>
     <button class="btn-edit-mode" id="btn-edit-mode" onclick="toggleEditMode()">Edit Mode</button>
     <div class="score-pill">
       <span class="score-label">Total</span>
@@ -636,7 +636,7 @@
     <button class="btn-add" onclick="addTask()">+ Add Task</button>
   </div>
   <div class="toolbar" style="margin-bottom:0.5rem;">
-    <button class="btn-reset-all" onclick="resetAll()">Reset Points</button>
+    <button id="btn-reset-points" class="btn-reset-all" onclick="resetAll()">Reset Points</button>
   </div>
 
   <div class="section-title">
