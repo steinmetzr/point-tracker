@@ -956,6 +956,13 @@ window.addEventListener('online',  function() { document.getElementById('offline
 window.addEventListener('offline', function() { document.getElementById('offline-badge').textContent = 'Offline Ready'; });
 
 // ── Import / Export ─────────────────────────────────────────────────
+function _isUserCancel(err) {
+  if (!err) return false;
+  if (err.name === 'AbortError' || err.name === 'NotAllowedError') return true;
+  if (err.message && /cancel|abort|user/i.test(err.message)) return true;
+  return false;
+}
+
 async function exportData() {
   // Export without IDs — imported items will get fresh UIDs
   const payload = {
@@ -966,53 +973,60 @@ async function exportData() {
     exportedAt: new Date().toISOString()
   };
   const json = JSON.stringify(payload, null, 2);
-  // Prefer File System Access API when available
-  if (window.showSaveFilePicker) {
-    try {
+  try {
+    if (window.showSaveFilePicker) {
+      // Prefer File System Access API when available
       const opts = [{ description: 'JSON', accept: { 'application/json': ['.json'] } }];
       const handle = await window.showSaveFilePicker({ types: opts });
       const writable = await handle.createWritable();
       await writable.write(json);
       await writable.close();
       alert('Export saved.');
-      return;
-    } catch (e) {
-      console.log('Save failed or cancelled', e);
+    } else {
+      // Fallback: prompt for filename and trigger download
+      const fname = prompt('Filename to save as', 'task-tracker.json') || 'task-tracker.json';
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = fname; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+      alert('Export downloaded to your browser downloads folder.');
     }
+  } catch (e) {
+      if (_isUserCancel(e)) {
+        console.log('User cancelled save.');
+      } else {
+        console.log('Save failed', e);
+      }
   }
-  // Fallback: prompt for filename and trigger download
-  const fname = prompt('Filename to save as', 'task-tracker.json') || 'task-tracker.json';
-  const blob = new Blob([json], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = fname; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
-  alert('Export downloaded to your browser downloads folder.');
 }
 
 async function importData() {
   // Prefer File System Access API
   let text = null;
-  if (window.showOpenFilePicker) {
-    try {
-      const [fileHandle] = await window.showOpenFilePicker({ types: [{ description: 'JSON', accept: { 'application/json': ['.json'] } }], multiple: false });
-      const file = await fileHandle.getFile();
-      text = await file.text();
-    } catch (e) { console.log('Open cancelled or failed', e); }
-  }
-  if (text === null) {
-    // Fallback to input[type=file]
-    const input = document.createElement('input'); input.type = 'file'; input.accept = '.json,application/json';
-    return new Promise((resolve) => {
-      input.addEventListener('change', function() {
-        const f = input.files && input.files[0]; if (!f) { resolve(); return; }
-        const reader = new FileReader();
-        reader.onload = function(e) { text = e.target.result; try { processImported(text); } catch(err){ alert('Import failed: ' + err); } resolve(); };
-        reader.readAsText(f);
+  try {
+    if (window.showOpenFilePicker) {
+        const [fileHandle] = await window.showOpenFilePicker({ types: [{ description: 'JSON', accept: { 'application/json': ['.json'] } }], multiple: false });
+        const file = await fileHandle.getFile();
+        text = await file.text();
+        try { await processImported(text); } catch (err) { alert('Import failed: ' + err); }
+    }
+    else {
+      // Fallback to input[type=file]
+      const input = document.createElement('input'); input.type = 'file'; input.accept = '.json,application/json';
+      return new Promise((resolve) => {
+        input.addEventListener('change', function() {
+          const f = input.files && input.files[0]; if (!f) { resolve(); return; }
+          const reader = new FileReader();
+          reader.onload = function(e) { text = e.target.result; try { processImported(text); } catch(err){ alert('Import failed: ' + err); } resolve(); };
+          reader.readAsText(f);
+        });
+        input.click();
       });
-      input.click();
-    });
+    }
+  } catch (e) {
+    if (_isUserCancel(e)) { console.log('User cancelled open.');}
+    else console.log('Open failed', e);
   }
-  try { await processImported(text); } catch (err) { alert('Import failed: ' + err); }
 }
 
 async function processImported(text) {
