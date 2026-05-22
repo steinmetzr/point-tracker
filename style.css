@@ -23,24 +23,24 @@
 
 /* Dark mode overrides */
 body.dark-mode {
-  --bg: #0f1112;
-  --surface: #121314;
-  --surface2: #171819;
-  --border: #26292a;
-  --border-strong: #2f3334;
-  --text: #F7F5F0;
-  --text-muted: #cfcfcf;
-  --text-faint: #9e9e9e;
-  --accent: #6fc36f;
-  --accent-light: rgba(111,195,111,0.06);
-  --accent-border: #4aa64a;
-  --danger: #ff6b6b;
-  --danger-light: rgba(255,107,107,0.06);
-  --gold: #d4b34a;
-  --gold-light: rgba(212,179,74,0.06);
-  --gold-border: #b58f27;
-  --header-bg: #0f1112;
-  --header-color: #F7F5F0;
+  --bg: #181c1f;
+  --surface: #202427;
+  --surface2: #262d31;
+  --border: #3a4146;
+  --border-strong: #4a5258;
+  --text: #F8F7F3;
+  --text-muted: #d6d6d1;
+  --text-faint: #b0b4b8;
+  --accent: #7cc97f;
+  --accent-light: rgba(124,201,127,0.1);
+  --accent-border: #60b058;
+  --danger: #ff7a7a;
+  --danger-light: rgba(255,122,122,0.1);
+  --gold: #dfbf57;
+  --gold-light: rgba(223,191,87,0.1);
+  --gold-border: #c19a2f;
+  --header-bg: #181c1f;
+  --header-color: #F8F7F3;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
