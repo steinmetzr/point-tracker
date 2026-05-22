@@ -23,10 +23,15 @@
   </div>
   <div style="display:flex;align-items:center;gap:0.75rem;">
     <span class="offline-badge" id="offline-badge">Offline Ready</span>
-    <button class="btn-export" onclick="exportData()">Export</button>
-    <button class="btn-import" onclick="importData()">Import</button>
-    <button class="btn-edit-mode" id="btn-theme-toggle" onclick="toggleTheme()">🌙</button>
-    <button class="btn-edit-mode" id="btn-edit-mode" onclick="toggleEditMode()">Edit Mode</button>
+    <div class="header-actions">
+      <button class="btn-menu" id="btn-menu" onclick="toggleMenu()" aria-label="Menu">☰</button>
+      <div class="menu-dropdown" id="menu-dropdown">
+        <button class="menu-item" onclick="toggleEditMode(); toggleMenu(false)" id="btn-edit-mode">Edit Mode</button>
+        <button class="menu-item" onclick="toggleTheme(); toggleMenu(false)" id="btn-theme-toggle">🌙</button>
+        <button class="menu-item" onclick="exportData(); toggleMenu(false)">Export</button>
+        <button class="menu-item" onclick="importData(); toggleMenu(false)">Import</button>
+      </div>
+    </div>
     <div class="score-pill">
       <span class="score-label">Total</span>
       <span class="score-num" id="header-total">0</span>
@@ -179,6 +184,22 @@ function toggleTheme() {
   localStorage.setItem(THEME_KEY, currentlyDark ? 'dark' : 'light');
   const btn = document.getElementById('btn-theme-toggle'); if (btn) btn.textContent = currentlyDark ? '☀️' : '🌙';
 }
+
+function toggleMenu(open) {
+  const menu = document.getElementById('menu-dropdown');
+  if (!menu) return;
+  const shouldOpen = typeof open === 'boolean' ? open : !menu.classList.contains('open');
+  menu.classList.toggle('open', shouldOpen);
+}
+
+window.addEventListener('click', function(event) {
+  const menu = document.getElementById('menu-dropdown');
+  const btn = document.getElementById('btn-menu');
+  if (!menu || !btn) return;
+  if (!menu.contains(event.target) && !btn.contains(event.target)) {
+    menu.classList.remove('open');
+  }
+});
 
 // ── Tasks ──────────────────────────────────────────────────────────
 

@@ -170,6 +170,58 @@ button {
 button:hover { background: var(--surface2); }
 button:active { transform: scale(0.98); }
 
+.header-actions {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.btn-menu {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menu-dropdown {
+  display: none;
+  flex-direction: column;
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+  min-width: 160px;
+  z-index: 100;
+}
+
+.menu-dropdown.open { display: flex; }
+
+.menu-item {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.9rem;
+  text-align: left;
+  padding: 0.85rem 1rem;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  width: 100%;
+}
+
+.menu-item:hover { background: var(--surface2); }
+
+.menu-item:not(:last-child) { border-bottom: 1px solid var(--border); }
+
 .btn-add {
   background: var(--accent);
   color: #fff;
