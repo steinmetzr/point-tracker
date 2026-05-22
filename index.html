@@ -32,11 +32,6 @@
         <button class="menu-item" onclick="importData(); toggleMenu(false)">Import</button>
       </div>
     </div>
-    <div class="score-pill">
-      <span class="score-label">Total</span>
-      <span class="score-num" id="header-total">0</span>
-      <span class="score-label">pts</span>
-    </div>
   </div>
 </header>
 
@@ -53,10 +48,6 @@
     <div class="stat-card">
       <div class="stat-label">Tasks Logged</div>
       <div class="stat-value" id="stat-logged">0</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Tasks Total</div>
-      <div class="stat-value" id="stat-total">0</div>
     </div>
   </div>
 
@@ -312,7 +303,6 @@ function render() {
   const totalEarned = tasks.reduce((s,t) => s + t.earned, 0);
   const logged = tasks.filter(t => t.earned > 0).length;
 
-  document.getElementById('header-total').textContent  = currentTotal;
   document.getElementById('task-count').textContent    = tasks.length   ? tasks.length   + ' task'   + (tasks.length   !== 1 ? 's' : '') : '';
   document.getElementById('reward-count').textContent  = rewards.length ? rewards.length + ' reward' + (rewards.length !== 1 ? 's' : '') : '';
   document.getElementById('rule-count').textContent    = rules.length   ? rules.length   + ' card'   + (rules.length   !== 1 ? 's' : '') : '';
@@ -323,7 +313,6 @@ function render() {
     document.getElementById('stat-current').textContent = currentTotal;
     document.getElementById('stat-earned').textContent  = totalEarned;
     document.getElementById('stat-logged').textContent  = logged;
-    document.getElementById('stat-total').textContent   = tasks.length;
   } else { bar.style.display = 'none'; }
 
   // Tasks
